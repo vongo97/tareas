@@ -46,7 +46,10 @@ while ($row = $result->fetch_assoc()) {
     </header>
     <div class="container">
         <h2>Asignar Tarea</h2>
-        <?php if ($_SERVER['REQUEST_METHOD'] == 'POST'): ?>
+        <?php if ($_SERVER['REQUEST_METHOD'] == 'POST'):
+            // Debug de sesión y variables
+            var_dump($_SESSION); ?>
+
             <?php
             $title = $_POST['title'];
             $description = $_POST['description'];
@@ -55,24 +58,61 @@ while ($row = $result->fetch_assoc()) {
             $priority = $_POST['priority'];
             $observations = $_POST['observations'];
             $comentarios = $_POST['comentarios'];
-            $user_id = $_POST['user_id'];
+            $user_id = (int)$_POST['user_id'];
+            $asigned_by = (int)$_SESSION['user_id'];
 
-            // Validaciones (es crucial validar la entrada)
-            if (empty($title)) {
-                echo '<div class="alert alert-danger">El título de la tarea es requerido.</div>';
-                exit;
+            // Consulta SQL modificada para incluir asigned_by
+            $sql = "INSERT INTO tareas (
+        user_id, 
+        title, 
+        description, 
+        start_date, 
+        end_date, 
+        priority, 
+        observations, 
+        comentarios, 
+        asigned_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $stmt = $conn->prepare($sql);
+
+            if (!$stmt) {
+                die("Error en prepare: " . $conn->error);
             }
 
+            // Modificar bind_param para incluir asigned_by
+            $stmt->bind_param(
+                "isssssssi",
+                $user_id,
+                $title,
+                $description,
+                $start_date,
+                $end_date,
+                $priority,
+                $observations,
+                $comentarios,
+                $asigned_by
+            );
 
-            // Usa sentencias preparadas para prevenir inyecciones SQL
-            $stmt = $conn->prepare("INSERT INTO tareas (user_id, title, description, start_date, end_date, priority, observations, comentarios) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("isssssss", $user_id, $title, $description, $start_date, $end_date, $priority, $observations, $comentarios);
+            // Debug pre-execute
+            var_dump([
+                'SQL' => $sql,
+                'Params' => [
+                    'user_id' => $user_id,
+                    'title' => $title,
+                    'asigned_by' => $asigned_by,
+                    'description' => $description,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                ]
+            ]);
 
-            if ($stmt->execute() === false) {
-                die("Error al ejecutar la consulta: " . $stmt->error);
-            } else {
+            if ($stmt->execute()) {
                 echo '<div class="alert alert-success">Tarea asignada correctamente.</div>';
+            } else {
+                echo '<div class="alert alert-danger">Error: ' . $stmt->error . '</div>';
             }
+
             $stmt->close();
             ?>
         <?php else: ?>
