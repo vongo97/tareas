@@ -8,11 +8,11 @@ function conectarDB()
     global $conn;
     if (!isset($conn)) {
         $host =
-            '192.168.1.120';
+            'localhost';
         $user =
-            'app_usrdb';
+            'AAA';
         $password =
-            '1Q@Az.2025#*';
+            '@PACOa4a';
         $db_name =
             'mensajeria';
 
