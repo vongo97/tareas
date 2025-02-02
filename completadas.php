@@ -10,6 +10,21 @@
 </head>
 
 <body>
+    <header>
+        <div class="container">
+            <ul class="nav nav-pills nav-fill gap-2 p-1 small bg-blue rounded-5 " id="pillNav2" role="tablist">
+                <li class="nav-item"><a class="nav-link" href="pendientes.php">Ver Tareas pendientes</a></li>
+                <li class="nav-item"><a class="nav-link" href="completadas.php">Historial de Tareas Completadas</a></li>
+                <li class="nav-item"><a class="nav-link" href="enviadas.php">Ver Historial de Tareas Enviadas</a></li>
+                <?php if ($rol == 'administrador' || $rol == 'lider'): ?>
+                    <li class="nav-item"><a class="nav-link" href="tareas_usuarios.php">Ver Tareas de Usuarios</a></li>
+                <?php endif; ?>
+                <li class="nav-item"><a class="nav-link" href="index.php">Inicio</a></li>
+                </li>
+            </ul>
+        </div>
+    </header>
+
     <div class="container">
         <h2>Historial de Tareas Completadas</h2>
 
@@ -134,6 +149,7 @@
                 t.description,
                 t.comentarios,
                 t.reasignaciones_restantes,
+                t.evidence,
                 u1.nombre AS responsable_actual,
                 COALESCE(u2.nombre, 'No asignado') AS creador
                 FROM tareas t
@@ -162,6 +178,7 @@
                 echo "<p class='card-text'><strong>Descripción:</strong> " . htmlspecialchars($historial['description']) . "</p>";
                 echo "<p class='card-text'><strong>Asignado por:</strong> " . htmlspecialchars($historial['creador']) . "</p>";
                 echo "<p class='card-text'><strong>Reasignaciones restantes:</strong> " . htmlspecialchars($historial['reasignaciones_restantes']) . "</p>";
+                echo "<p class='card-text'><strong>Evidencia:</strong> " . htmlspecialchars($historial['evidence']) . "</p>";
                 echo "<div class='card mt-3'>";
                 echo "<div class='card-header'><strong>Comentarios y Cambios</strong></div>";
                 echo "<div class='card-body'>";

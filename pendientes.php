@@ -11,6 +11,21 @@
 
 <body>
 
+    <header>
+        <div class="container">
+            <ul class="nav nav-pills nav-fill gap-2 p-1 small bg-blue rounded-5 " id="pillNav2" role="tablist">
+                <li class="nav-item"><a class="nav-link" href="pendientes.php">Ver Tareas pendientes</a></li>
+                <li class="nav-item"><a class="nav-link" href="completadas.php">Historial de Tareas Completadas</a></li>
+                <li class="nav-item"><a class="nav-link" href="enviadas.php">Ver Historial de Tareas Enviadas</a></li>
+                <?php if ($rol == 'administrador' || $rol == 'lider'): ?>
+                    <li class="nav-item"><a class="nav-link" href="tareas_usuarios.php">Ver Tareas de Usuarios</a></li>
+                <?php endif; ?>
+                <li class="nav-item"><a class="nav-link" href="index.php">Inicio</a></li>
+                </li>
+            </ul>
+        </div>
+    </header>
+
     <div class="container">
 
         <h2>Panel de Tareas Pendientes</h2>
@@ -114,28 +129,69 @@
 
         // Muestra las tareas pendientes (o un mensaje si no hay)
         echo "<table class='table table-striped'>";
-        echo "<thead><tr><th>Título</th><th>Estado</th><th>Prioridad</th><th>Responsable</th><th>Descripción</th><th>Fecha de Inicio</th><th>Fecha de Cierre</th><th>Acciones</th></tr></thead>";
+        echo "<thead><tr><th>Título</th><th>Estado</th><th>Prioridad</th><th>Responsable</th><th>Descripción</th><th>Fecha de Inicio</th><th>Fecha de Cierre</th><th>SLA</th><th>Acciones</th></tr></thead>";
 
 
         if ($result->num_rows > 0) {
             $tareas = $result->fetch_all(MYSQLI_ASSOC);
             echo "<tbody>";
             foreach ($tareas as $tarea) {
+                // Definir los tiempos predeterminados para cada prioridad
+                $tiempos_sla = [
+                    'baja' => 'P1W',
+                    'media' => 'P3D',
+                    'alta' => 'P1D',
+                    'urgente' => 'PT4H'
+
+
+
+                ];
+
+                // Verificar si la prioridad está definida en el array
+                if (isset($tiempos_sla[$tarea['priority']])) {
+                    // Calcular la fecha límite basada en la fecha de inicio y la prioridad
+                    $fecha_inicio = new DateTime($tarea['start_date']);
+                    $intervalo_sla = new DateInterval($tiempos_sla[$tarea['priority']]);
+                    $fecha_limite = clone $fecha_inicio;
+                    $fecha_limite->add($intervalo_sla);
+
+                    // Calcular el tiempo restante o excedido del SLA
+                    $fecha_actual = new DateTime();
+                    $intervalo = $fecha_actual->diff($fecha_limite);
+                    $dias_restantes = $intervalo->format('%r%a'); // %r para incluir el signo negativo si es necesario
+
+                    // Determinar el estado del SLA
+                    if ($dias_restantes >= 0) {
+                        $sla_status = "Dentro de SLA";
+                        $sla_class = "badge bg-success";
+                    } else {
+                        $sla_status = "Fuera de SLA";
+                        $sla_class = "badge bg-danger";
+                    }
+                } else {
+                    // Si la prioridad no está definida, mostrar un mensaje de error
+                    $sla_status = "Prioridad no definida: " . htmlspecialchars($tarea['priority']);
+                    $sla_class = "badge bg-secondary";
+                    $dias_restantes = "N/A";
+                    error_log("Prioridad no definida: " . $tarea['priority']); // Registro de depuración
+                }
+
                 echo "<tr>";
-                echo "<td>" . $tarea['title'] . "</td>";
+                echo "<td>" . htmlspecialchars($tarea['title']) . "</td>";
                 echo "<td>" . ($tarea['completed'] == 0
                     ? '<span class= "badge bg-warning">Pendiente</span>'
                     : '<span class= "badge bg-success">Completada</span">'
                 ) . "</td>";
-                echo "<td>" . $tarea['priority'] . "</td>";
-                echo "<td>" . $tarea['responsable'] . "</td>";
-                echo "<td>" . $tarea['description'] . "</td>";
-                echo "<td>" . $tarea['start_date'] . "</td>";
-                echo "<td>" . $tarea['end_date'] . "</td>";
+                echo "<td>" . htmlspecialchars($tarea['priority']) . "</td>";
+                echo "<td>" . htmlspecialchars($tarea['responsable']) . "</td>";
+                echo "<td>" . htmlspecialchars($tarea['description']) . "</td>";
+                echo "<td>" . htmlspecialchars($tarea['start_date']) . "</td>";
+                echo "<td>" . htmlspecialchars($tarea['end_date']) . "</td>";
+                echo "<td><span class='$sla_class'>$dias_restantes días ($sla_status)</span></td>";
                 echo "<td>";
                 echo "<form method='POST'>";
                 echo "<input type='hidden' name='tarea_id' value='" . $tarea['tarea_id'] . "'>";
-                echo "<button type='submit' name='submit' value='completar' class='badge bg-success'>Completar</button>";
+                echo "<button type='button' class='badge bg-success' data-bs-toggle='modal' data-bs-target='#evidenceModal' data-tarea-id='" . htmlspecialchars($tarea['tarea_id']) . "'>Completar</button>";
                 echo "<button type='submit' name='submit' value='agregarcomentario' class='badge bg-warning'>Agregar Comentario</button>";
                 if ($tarea['reasignaciones_restantes'] > 0) {
                     echo "<button type='submit' name='submit' value='reasignar' class='badge bg-warning'>Reasignar</button>";
@@ -148,37 +204,64 @@
             }
             echo "</tbody>";
         } else {
-            echo "<tbody><tr><td colspan='6'>No hay tareas pendientes para este usuario.</td></tr></tbody>";
+            echo "<tbody><tr><td colspan='9'>No hay tareas pendientes para este usuario.</td></tr></tbody>";
         }
         echo "</table>";
 
+        // Modal para agregar evidencia
+        echo '<div class="modal fade" id="evidenceModal" tabindex="-1" aria-labelledby="evidenceModalLabel" aria-hidden="true">';
+        echo '<div class="modal-dialog">';
+        echo '<div class="modal-content">';
+        echo '<div class="modal-header">';
+        echo '<h5 class="modal-title" id="evidenceModalLabel">Agregar Evidencia</h5>';
+        echo '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>';
+        echo '</div>';
+        echo '<div class="modal-body">';
+        echo '<form id="evidenceForm" method="POST">';
+        echo '<input type="hidden" name="tarea_id" id="modalTareaId">';
+        echo '<div class="mb-3">';
+        echo '<label for="evidence" class="form-label">Evidencia:</label>';
+        echo '<textarea class="form-control" id="evidence" name="evidence" rows="3" required></textarea>';
+        echo '</div>';
+        echo '<button type="submit" name="submit" value="completarTarea" class="btn btn-primary">Completar Tarea</button>';
+        echo '</form>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && $_POST['submit'] == 'completar') {
+        echo '<script>';
+        echo 'document.addEventListener("DOMContentLoaded", function() {';
+        echo 'var evidenceModal = document.getElementById("evidenceModal");';
+        echo 'evidenceModal.addEventListener("show.bs.modal", function(event) {';
+        echo 'var button = event.relatedTarget;';
+        echo 'var tareaId = button.getAttribute("data-tarea-id");';
+        echo 'var modalTareaId = document.getElementById("modalTareaId");';
+        echo 'modalTareaId.value = tareaId;';
+        echo '});';
+        echo '});';
+        echo '</script>';
 
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && $_POST['submit'] == 'completarTarea') {
             $tarea_id = $_POST['tarea_id'];
-            $sqlUpdate = "UPDATE tareas SET completed = 1 WHERE id = ?";
+            $evidence = $_POST['evidence'];
+
+            // Consulta para actualizar la evidencia y marcar la tarea como completada
+            $sqlUpdate = "UPDATE tareas SET evidence = ?, completed = 1 WHERE id = ?";
+            $conn = conectarDB();
             $stmtUpdate = $conn->prepare($sqlUpdate);
+            $stmtUpdate->bind_param("si", $evidence, $tarea_id);
 
-
-
-            if ($stmtUpdate === false) {
-                die("Error al preparar la consulta: " . $conn->error);
+            if ($stmtUpdate->execute()) {
+                echo '<div class="alert alert-success">Tarea completada y evidencia agregada correctamente.</div>';
+            } else {
+                echo '<div class="alert alert-danger">Error: ' . $stmtUpdate->error . '</div>';
             }
 
-
-            $stmtUpdate->bind_param("i", $tarea_id);
-            if ($stmtUpdate->execute() === false) {
-                die("Error al ejecutar la consulta: " . $stmtUpdate->error);
-            }
             $stmtUpdate->close();
-
-            echo "<p class='alert alert-success'>Tarea completada exitosamente.</p>";
-
-            //Actualiza la página para mostrar las tareas actualizadas (opcional).
-            // header("Refresh:0");  //Para recargar la página actual
+            $conn->close();
         }
 
-        //asignar comentario
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && $_POST['submit'] == 'agregarcomentario') {
             $tarea_id = $_POST['tarea_id'];
 
