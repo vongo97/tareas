@@ -78,11 +78,10 @@ while ($row = $result->fetch_assoc()) {
             $priority = (int)$_POST['priority']; // Convertir a entero
             $observations = $_POST['observations'];
             $comentarios = $_POST['comentarios'];
-            $evidence = $_POST['evidence'];
             $user_id = (int)$_POST['user_id'];
             $asigned_by = (int)$_SESSION['user_id'];
 
-            // Consulta SQL modificada para incluir asigned_by y evidence
+            // Consulta SQL modificada para incluir asigned_by
             $sql = "INSERT INTO tareas (
         user_id, 
         title, 
@@ -92,9 +91,8 @@ while ($row = $result->fetch_assoc()) {
         priority, 
         observations, 
         comentarios, 
-        evidence,
         asigned_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $conn->prepare($sql);
 
@@ -102,9 +100,9 @@ while ($row = $result->fetch_assoc()) {
                 die("Error en prepare: " . $conn->error);
             }
 
-            // Modificar bind_param para incluir asigned_by y evidence
+            // Modificar bind_param para incluir asigned_by
             $stmt->bind_param(
-                "issssssssi",
+                "isssssssi",
                 $user_id,
                 $title,
                 $description,
@@ -113,7 +111,6 @@ while ($row = $result->fetch_assoc()) {
                 $priority,
                 $observations,
                 $comentarios,
-                $evidence,
                 $asigned_by
             );
 
@@ -153,17 +150,13 @@ while ($row = $result->fetch_assoc()) {
                     <label for="comentarios" class="form-label">Comentarios:</label>
                     <textarea class="form-control" id="comentarios" name="comentarios" rows="3"></textarea>
                 </div>
-
                 <div class="mb-3">
                     <label for="priority" class="form-label">Prioridad:</label>
                     <select class="form-select" id="priority" name="priority" required>
-                        <option value="4">Urgente</option>
-                        <option value="3">Alta</option>
-                        <option value="2">Media</option>
-                        <option value="1">Baja</option>
-
-
-
+                        <option value="1">Urgente</option>
+                        <option value="2">Alta</option>
+                        <option value="3">Media</option>
+                        <option value="4">Baja</option>
                     </select>
                 </div>
                 <div class="mb-3">

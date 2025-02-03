@@ -16,9 +16,6 @@
                 <li class="nav-item"><a class="nav-link" href="pendientes.php">Ver Tareas pendientes</a></li>
                 <li class="nav-item"><a class="nav-link" href="completadas.php">Historial de Tareas Completadas</a></li>
                 <li class="nav-item"><a class="nav-link" href="enviadas.php">Ver Historial de Tareas Enviadas</a></li>
-                <?php if ($rol == 'administrador' || $rol == 'lider'): ?>
-                    <li class="nav-item"><a class="nav-link" href="tareas_usuarios.php">Ver Tareas de Usuarios</a></li>
-                <?php endif; ?>
                 <li class="nav-item"><a class="nav-link" href="index.php">Inicio</a></li>
                 </li>
             </ul>
