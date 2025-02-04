@@ -16,6 +16,7 @@
     date_default_timezone_set('America/Bogota');
 
     session_start();
+    ob_start(); // Iniciar el almacenamiento en búfer de salida
     require_once("conexion.php");
     $conn = conectarDB();
 
@@ -381,7 +382,7 @@
                                 <input type="hidden" name="tarea_id" value="<?php echo $tarea_id; ?>">
                                 <div class="mb-3">
                                     <label for="nuevo_usuario" class="form-label">Seleccionar nuevo responsable:</label>
-                                    <select name="nuevo_usuario" class="form-select" required>
+                                    <select name="nuevo_usuario" class="form-select">
                                         <option value="">Seleccione un usuario</option>
                                         <?php
                                         foreach ($usuarios as $usuario) {
@@ -392,7 +393,7 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="submit" name="submit" value="confirmar_reasignacion" class="btn btn-primary">Confirmar</button>
-                                    <button type="submit" name="submit" value="cancelar_reasignacion" class="btn btn-secondary">Cancelar</button>
+                                    .. <button type="submit" name="submit" value="cancelar_reasignacion" class="btn btn-secondary">Cancelar</button>
                                 </div>
                             </form>
                         </div>
@@ -421,11 +422,12 @@
             $stmtUpdate->close();
         }
 
-        // Cancelar reasignación
+        // Cancelar comentario
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit']) && $_POST['submit'] == 'cancelar_reasignacion') {
-            header("Location: pendientes.php");
+            header('Location: pendientes.php');
             exit;
         }
+
         ?>
 
     </div>
