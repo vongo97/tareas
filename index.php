@@ -4,7 +4,7 @@ require_once("conexion.php");
 $conn = conectarDB();
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ingreso.php');
     exit;
 }
 
@@ -91,8 +91,9 @@ while ($row = $result->fetch_assoc()) {
         priority, 
         observations, 
         comentarios, 
-        asigned_by
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        asigned_by,
+        reasignaciones_restantes
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,3)";
 
             $stmt = $conn->prepare($sql);
 
@@ -153,10 +154,10 @@ while ($row = $result->fetch_assoc()) {
                 <div class="mb-3">
                     <label for="priority" class="form-label">Prioridad:</label>
                     <select class="form-select" id="priority" name="priority" required>
-                        <option value="1">Urgente</option>
-                        <option value="2">Alta</option>
-                        <option value="3">Media</option>
-                        <option value="4">Baja</option>
+                        <option value="1">Baja</option>
+                        <option value="2">Media</option>
+                        <option value="3">Alta</option>
+                        <option value="4">Urgente</option>
                     </select>
                 </div>
                 <div class="mb-3">

@@ -20,7 +20,7 @@
     $conn = conectarDB();
 
     if (!isset($_SESSION['user_id'])) {
-        header('Location: login.php');
+        header('Location: ingreso.php');
         exit;
     }
 
@@ -161,7 +161,6 @@
                 if ($tarea['reasignaciones_restantes'] > 0) {
                     echo "<button type='submit' name='submit' value='reasignar' class='badge bg-warning'>Reasignar</button> ";
                 }
-                echo "<button type='submit' name='submit' value='verhistorial' class='badge bg-info'>Ver Historial de la Tarea</button>";
                 echo "</form>";
                 echo "</td>";
                 echo "</tr>";
